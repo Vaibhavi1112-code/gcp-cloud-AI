@@ -23,13 +23,12 @@
                     <li> 
                         {% if file.endswith('.wav') %}
                         <audio controls>
-                            <source src="{{ url_for('speak_file',filename=file) }}" type="audio/wav">
+                            <source src="{{ url_for('speak_file', filename=file) }}" type="audio/wav">
                             Your browser does not support the audio element.
                         </audio><br>
                         {{ file }}
-                        {% endif %}
-                        {% if file.endswith('.txt') %}
-                        <a href="{{ url_for('speak_file', filename=file) }}?referrer={{ request.url }}" target="_blank">{{ file }}</a>
+                        {% elif file.endswith('.txt') %}
+                        <a href="{{ url_for('speak_file', filename=file) }}" target="_blank">{{ file }}</a>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -38,7 +37,7 @@
             <td style="width:50%">
                 <h2>Type in your text to generate audio</h2>
                 <form action="/upload_typing" method="post">
-                  <textarea name="text" rows="10" cols="50"></textarea>
+                  <textarea name="text" rows="10" cols="50" required></textarea>
                   <br>
                   <input type="submit" value="Upload">
                 </form>
@@ -47,11 +46,15 @@
                 <ul>
                     {% for file in typing_files %}
                     <li> 
+                        {% if file.endswith('.wav') %}
                         <audio controls>
                             <source src="{{ url_for('typing_file', filename=file) }}" type="audio/mp3">
                             Your browser does not support the audio element.
                         </audio><br>
                         {{ file }}
+                        {% elif file.endswith('.txt') %}
+                        <a href="{{ url_for('typing_file', filename=file) }}" target="_blank">{{ file }}</a>
+                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
@@ -61,4 +64,3 @@
     <script src="./script.js"></script>
 </body>
 </html>
-

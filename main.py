@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 import os
 import io
 from google.cloud import speech, texttospeech
-#from pydub.utils import mediainfo 
 
 app = Flask(__name__)
 
@@ -22,10 +21,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_files(folder, extension):
-    files = []
-    for filename in os.listdir(folder):
-        if filename.endswith(extension) or filename.endswith('.txt'):
-            files.append(filename)
+    files = [filename for filename in os.listdir(folder) if filename.endswith(extension) or filename.endswith('.txt')]
     files.sort(reverse=True)
     return files
 
@@ -46,32 +42,36 @@ def upload_speak():
         return redirect(request.url)
     if file and allowed_file(file.filename):
         filename = datetime.now().strftime("%Y%m%d-%I%M%S%p") + '.wav'
-        print("FILE NAME IS: ", filename)
         file_path = os.path.join(app.config['SPEAK_FOLDER'], filename)
-        print("FILE PATH IS: ", file_path)
         file.save(file_path)
         
-        
         # Call speech-to-text API
-        #filename = "example.wav"  # Replace with the actual filename you are processing
-        file_path = os.path.join(app.config['SPEAK_FOLDER'], filename)
         transcript = speech_to_text(file_path)
         transcript_filename = filename.rsplit('.', 1)[0] + '.txt'
         transcript_path = os.path.join(app.config['SPEAK_FOLDER'], transcript_filename)
         with open(transcript_path, 'w') as f:
             f.write(transcript)
-        
     
     return redirect('/')  # success
 
 @app.route('/upload_typing', methods=['POST'])
 def upload_typing():
     text = request.form['text']
-    print(text)
     
-    # Call text-to-speech API
-    tts_output_filename = datetime.now().strftime("%Y%m%d-%I%M%S%p") + '.wav'
+    # Generate filenames
+    timestamp = datetime.now().strftime("%Y%m%d-%I%M%S%p")
+    tts_output_filename = f"{timestamp}.wav"
+    text_filename = f"{timestamp}.txt"
+
+    # Paths for saving files
     tts_output_path = os.path.join(app.config['TYPING_FOLDER'], tts_output_filename)
+    text_path = os.path.join(app.config['TYPING_FOLDER'], text_filename)
+
+    # Save text to file
+    with open(text_path, "w") as text_file:
+        text_file.write(text)
+
+    # Call text-to-speech API
     text_to_speech(text, tts_output_path)
     
     return redirect('/')  # success
@@ -85,13 +85,10 @@ def typing_file(filename):
     return send_from_directory(app.config['TYPING_FOLDER'], filename)
 
 def speech_to_text(file_path):
-    #print("MEDIA INFO")
-    #print(mediainfo(file_path))
-
     client = speech.SpeechClient()
     with io.open(file_path, "rb") as audio_file:
         content = audio_file.read()
-
+    
     if not content:
         print("No content in the audio file.")
     
@@ -103,15 +100,7 @@ def speech_to_text(file_path):
     )
     
     response = client.recognize(config=config, audio=audio)
-
-    if response.results:
-        print("SPEECH TO TEXT REPONSE :")
-    else:
-        print("NO SPEECH TO TEXT REPONSE")
-    
-    transcript = ""
-    for result in response.results:
-        transcript += result.alternatives[0].transcript
+    transcript = "".join(result.alternatives[0].transcript for result in response.results)
     
     return transcript
 
@@ -135,7 +124,7 @@ def text_to_speech(text, output_path):
     with open(output_path, "wb") as out:
         out.write(response.audio_content)
 
-@app.route('/script.js',methods=['GET'])
+@app.route('/script.js', methods=['GET'])
 def scripts_js():
     return send_file('./script.js')
 
