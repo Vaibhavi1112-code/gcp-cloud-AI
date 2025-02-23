@@ -23,7 +23,7 @@
                     <li> 
                         {% if file.endswith('.wav') %}
                         <audio controls>
-                            <source src="{{ url_for('speak_file', filename=file) }}" type="audio/wav">
+                             <source src="{{ url_for('speak_file', filename=file) }}" type="audio/wav"> 
                             Your browser does not support the audio element.
                         </audio><br>
                         {{ file }}
