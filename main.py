@@ -12,8 +12,6 @@ if not API_KEY:
 
 genai.configure(api_key=API_KEY)
 
-
-
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads/speak'
 ALLOWED_EXTENSIONS = {'wav', 'mp3'}
