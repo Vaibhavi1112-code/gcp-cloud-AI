@@ -1,34 +1,51 @@
+import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, send_file
+<<<<<<< HEAD
 import os
 import io
 from google.cloud import speech, texttospeech, language_v1
+=======
+import google.generativeai as genai
+>>>>>>> 2b7e12b (project 3 changes)
 
 app = Flask(__name__)
 
-# Configure upload folders
-BASE_UPLOAD_FOLDER = 'uploads'
-SPEAK_FOLDER = os.path.join(BASE_UPLOAD_FOLDER, 'speak')
-TYPING_FOLDER = os.path.join(BASE_UPLOAD_FOLDER, 'typing')
-ALLOWED_EXTENSIONS = {'wav', 'mp3'}
-app.config['SPEAK_FOLDER'] = SPEAK_FOLDER
-app.config['TYPING_FOLDER'] = TYPING_FOLDER
+# Get API key from environment variable
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable not set")
 
-os.makedirs(SPEAK_FOLDER, exist_ok=True)
-os.makedirs(TYPING_FOLDER, exist_ok=True)
+genai.configure(api_key=API_KEY)
+
+# Configure upload folder
+UPLOAD_FOLDER = 'uploads/speak'
+ALLOWED_EXTENSIONS = {'wav', 'mp3'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
+    """Check if file is an allowed audio format."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_files(folder, extension, exclude_patterns=None):
+<<<<<<< HEAD
     if exclude_patterns is None:
         exclude_patterns = []
 
     # Get all files with the specified extension while excluding the specified patterns
+=======
+    """Retrieve files from a folder, sorted by modification time."""
+    if exclude_patterns is None:
+        exclude_patterns = []
+    
+>>>>>>> 2b7e12b (project 3 changes)
     files = [filename for filename in os.listdir(folder) 
              if (filename.endswith(extension) or filename.endswith('.txt')) 
              and not any(pattern in filename for pattern in exclude_patterns)]
     
+<<<<<<< HEAD
     # Prioritize .wav files to be at the beginning of the list
     wav_files = [f for f in files if f.endswith('.wav')]
     other_files = [f for f in files if not f.endswith('.wav')]
@@ -36,23 +53,29 @@ def get_files(folder, extension, exclude_patterns=None):
     # Combine the lists and sort the combined list in reverse order
     files = wav_files + other_files
     files.sort(reverse=True)
+=======
+    files.sort(key=lambda f: os.path.getmtime(os.path.join(folder, f)), reverse=True)
+>>>>>>> 2b7e12b (project 3 changes)
     return files
 
 @app.route('/')
 def index():
-    speak_files = get_files(app.config['SPEAK_FOLDER'], '.wav')
-    typing_files = get_files(app.config['TYPING_FOLDER'], '.wav')
-    return render_template('index.html', speak_files=speak_files, typing_files=typing_files)
+    """Render index page with list of uploaded audio files."""
+    speak_files = get_files(app.config['UPLOAD_FOLDER'], '.wav')
+    return render_template('index.html', speak_files=speak_files)
 
 @app.route('/upload_speak', methods=['POST'])
 def upload_speak():
+    """Handle audio file upload and process it using Gemini AI."""
     if 'audio_data' not in request.files:
         flash('No audio data')
         return redirect(request.url)
+
     file = request.files['audio_data']
-    if file.filename == '':
-        flash('No selected file')
+    if file.filename == '' or not allowed_file(file.filename):
+        flash('Invalid file selection')
         return redirect(request.url)
+<<<<<<< HEAD
     if file and allowed_file(file.filename):
         filename = datetime.now().strftime("%Y%m%d-%I%M%S%p") + '.wav'
         file_path = os.path.join(app.config['SPEAK_FOLDER'], filename)
@@ -108,13 +131,46 @@ def upload_typing():
     return redirect('/')  # success
 
 @app.route('/uploads/speak/<filename>')
+=======
+    
+    # Generate filename with timestamp
+    filename_base = datetime.now().strftime("%Y%m%d-%I%M%S%p")
+    audio_filename = f"{filename_base}.wav"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+    file.save(file_path)
+    
+    # Process audio with Gemini API
+    analysis_result = process_audio_with_gemini(file_path)
+    
+    # Save analysis result (transcript + sentiment analysis)
+    result_filename = f"{filename_base}.txt"
+    result_path = os.path.join(app.config['UPLOAD_FOLDER'], result_filename)
+    with open(result_path, 'w') as f:
+        f.write(analysis_result)
+    
+    return redirect('/')
+
+@app.route('/uploads/speak/<path:filename>')
+>>>>>>> 2b7e12b (project 3 changes)
 def speak_file(filename):
-    return send_from_directory(app.config['SPEAK_FOLDER'], filename)
+    """Serve uploaded files."""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/uploads/typing/<filename>')
-def typing_file(filename):
-    return send_from_directory(app.config['TYPING_FOLDER'], filename)
+def process_audio_with_gemini(file_path):
+    """Send audio file to Gemini API for transcription and sentiment analysis."""
+    with open(file_path, "rb") as audio_file:
+        audio_data = audio_file.read()
+    
+    mime_type = "audio/wav" if file_path.endswith('.wav') else "audio/mpeg"
+    
+    model = genai.GenerativeModel("gemini-1.5-pro")
+    response = model.generate_content([
+        "Transcribe this audio and analyze its sentiment, providing a score between -1 and 1:",
+        {"mime_type": mime_type, "data": audio_data}
+    ])
+    return response.text if response else "No analysis available"
 
+<<<<<<< HEAD
 def speech_to_text(file_path):
     client = speech.SpeechClient()
     with io.open(file_path, "rb") as audio_file:
@@ -168,8 +224,11 @@ def analyze_sentiment(text):
     
     return sentiment, sentiment_score
 
+=======
+>>>>>>> 2b7e12b (project 3 changes)
 @app.route('/script.js', methods=['GET'])
 def scripts_js():
+    """Serve script.js file."""
     return send_file('./script.js')
 
 if __name__ == '__main__':
