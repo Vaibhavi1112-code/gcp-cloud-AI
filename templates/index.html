@@ -1,62 +1,280 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Audio Recorder</title>
-    <link rel="shortcut icon" href="#">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Interaction</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        h2 {
+            color: #555;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-container {
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .form-container label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .form-container input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .upload-list {
+            margin-top: 30px;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .upload-list li {
+            background: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-list li:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-list li a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .audio-list {
+            margin-top: 20px;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .audio-list li {
+            background: #f9f9f9;
+            margin: 10px 0; /* Increase margin for more space between items */
+            padding: 10px; /* Increase padding inside the box */
+            border-radius: 10px; /* Make the box rounded for a cleaner look */
+            display: flex;
+            flex-direction: column; /* Stack audio and links vertically */
+            justify-content: center;
+            align-items: flex-start;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Add a slight shadow for a better effect */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .audio-list li:hover {
+            transform: scale(1.05); /* Slightly enlarge the box on hover */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Increase the shadow on hover */
+        }
+
+        .audio-list li a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.1em; /* Increase font size for better visibility */
+            
+        }
+
+        audio {
+            width: 100%; /* Make the audio player span the width of the box */
+            
+        }
+
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            color: green;
+        }
+
+        .flash-messages li {
+            padding: 10px;
+            margin-top: 5px;
+            background: #e0f7e0;
+            border: 1px solid #c0e4c0;
+            border-radius: 4px;
+        }
+
+        .record-btns {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .record-btns button {
+            margin: 0 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .record-btns button:disabled {
+            background-color: #bbb;
+        }
+
+        .record-btns button:hover {
+            background-color: #e64a19;
+        }
+    </style>
 </head>
 <body>
-    <table style="width:100%">
-        <tr>
-            <td style="width:50%">
-                <h2>Record and Upload Audio (Speak)</h2>
-                <button id="recordSpeak">Record</button>
-                <button id="stopSpeak" disabled>Stop</button>
-                <span id="timerSpeak">00:00</span>
-                <audio id="audioSpeak" controls></audio>
-                <form id="uploadSpeakForm" method="POST" enctype="multipart/form-data" action="/upload_speak">
-                    <input type="hidden" name="audio_data" id="audioDataSpeak">
-                </form>
-                <hr>
-                <h2>Speak Files</h2>
-                <ul>
-                    {% for file in speak_files %}
-                    <li> 
-                        {% if file.endswith('.wav') %}
-                        <audio controls>
-                             <source src="{{ url_for('speak_file', filename=file) }}" type="audio/wav"> 
-                            Your browser does not support the audio element.
-                        </audio><br>
-                        {{ file }}
-                        {% elif file.endswith('.txt') %}
-                        <a href="{{ url_for('speak_file', filename=file) }}" target="_blank">{{ file }}</a>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-            </td>
-            <td style="width:50%">
-                
-                
-                  
-                
-                <ul>
-                    {% for file in typing_files %}
-                    <li> 
-                        {% if file.endswith('.wav') %}
-                        <audio controls>
-                            <source src="{{ url_for('typing_file', filename=file) }}" type="audio/mp3">
-                            Your browser does not support the audio element.
-                        </audio><br>
-                        {{ file }}
-                        {% elif file.endswith('.txt') %}
-                        <a href="{{ url_for('typing_file', filename=file) }}" target="_blank">{{ file }}</a>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-            </td>
-        </tr>
-    </table>
-    <script src="./script.js"></script>
+
+    <h1>Upload PDF and Ask Questions</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages">
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="form-container">
+        <form method="POST" action="/upload_pdf" enctype="multipart/form-data">
+            <label>Upload PDF Book:</label><br>
+            <input type="file" name="pdf_file" accept="application/pdf" required>
+            <button type="submit">Upload Book</button>
+        </form>
+    </div>
+
+    <h2>Uploaded PDF Books</h2>
+    <ul class="upload-list">
+        {% for file in pdf_files %}
+            <li><a href="{{ url_for('pdf_file', filename=file) }}">{{ file }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Record Your Question</h2>
+    <div class="record-btns">
+        <button id="recordButton">Start Recording</button>
+        <button id="stopButton" disabled>Stop Recording</button>
+    </div>
+
+    <h2>Saved Audio and Text Files</h2>
+    <ul class="audio-list">
+    {% for file in speak_files if file.endswith('.wav') %}
+        <li>
+            <audio controls>
+                <source src="{{ url_for('speak_file', filename=file) }}" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+            <br>
+            <a href="{{ url_for('speak_file', filename=file) }}">{{ file }}</a>
+            <br>
+            {% set text_file = file.replace('.wav', '.txt') %}
+            {% if text_file in text_files %}
+                <a href="{{ url_for('speak_file', filename=text_file) }}">{{ text_file }}</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const recordButton = document.getElementById("recordButton");
+        const stopButton = document.getElementById("stopButton");
+
+        recordButton.addEventListener("click", async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio_data', audioBlob, 'question.wav');
+
+                fetch('/upload_speak', {
+                    method: 'POST',
+                    body: formData
+                }).then(() => {
+                    window.location.reload();
+                });
+            };
+
+            mediaRecorder.start();
+            recordButton.disabled = true;
+            stopButton.disabled = false;
+        });
+
+        stopButton.addEventListener("click", () => {
+            mediaRecorder.stop();
+            recordButton.disabled = false;
+            stopButton.disabled = true;
+        });
+    </script>
+
 </body>
 </html>
