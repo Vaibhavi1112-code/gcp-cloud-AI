@@ -5,4 +5,4 @@ google-cloud-texttospeech==2.17.2
 google-cloud-language==2.17.0
 gunicorn==22.0.0
 google-generativeai
-PyMuPDF==1.18.19 
+PyMuPDF>=1.22.3
